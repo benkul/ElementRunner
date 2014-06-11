@@ -1,0 +1,21 @@
+background = bacon.Image('Galaxy.jpg')
+ship = bacon.Image('ship3.png')
+titlefont = bacon.Font('moonhouse.ttf', 40)
+
+
+class Menu(bacon.Game):
+
+	def on_tick(self):
+		bacon.draw_image(background, 0, 0)
+
+
+
+
+
+
+
+class Game(bacon.Game):
+	def on_tick(self):
+		bacon.draw_image(background, 0, 0)
+		
+

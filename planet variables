@@ -1,0 +1,13 @@
+planet variables
+x location -changes as player variable time changes need function to determine current location
+y location
+x orbit out  - rotational constants - could be globally defined or planet specific. 
+y orbit down - rotational constants
+
+commodities sold on planet = list with name, quantity, current price
+-function to change commodity price based on quantity on hand
+
+fucntion to determine planet location 
+	while time greater than 360 remove 360 store as local time
+- 	location x + x orbit out (cos(time* pi/180))
+	location y + y orbit up (cos(time* pi/180))

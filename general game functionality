@@ -1,0 +1,41 @@
+general game functionality
+-options when on planet
+-encounters en route to planets
+	- space pirates
+	
+	- rival element runners
+
+	-mining on asteroids for elements?
+		-they'd need to be locations?
+		-maybe random positive encounter
+
+def distance_between_planets(planet1, planet2):
+	return int((
+	(planet2.loc_x - planet1.loc_x) ** 2 + 
+	(planet2.loc_y - planet1.loc_y) ** 2 ) **(.5))
+flat icon attribution
+	<div>Icon made by <a href="http://www.freepik.com" alt="Freepik.com" title="Freepik.com">Freepik</a> from <a href="http://www.flaticon.com/free-icon/rocket-pointing-to-upper-left-direction_43030" title="Flaticon">www.flaticon.com</a></div>
+
+battery
+183, 486
+233, 540
+
+cargo_list
+267, 486
+339, 540
+
+market
+363, 486
+435, 540
+
+money
+460, 486
+540, 540
+
+take off
+555, 485
+630, 540
+
+gas gauge:
+x1, y1 : 15, 496
+x2, y2 : 179, 530
