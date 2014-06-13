@@ -2,19 +2,35 @@ import bacon
 import copy
 from random import randrange
 from random import choice
-from math import atan
+from math import log
 from math import pi
 from ship import Ship
 from player import Player
 from planets import planet_list, Planet # contains list of planets for game
 from elements import element_list # contains list of element commodities for game
 
+def rarity(quantity, base_price):
+	price = float(base_price * (1.0 - ((quantity/200.0))))
+	if price <= 0:
+		price = 1
+	return price
+ 
+
+high_score = []
 element_pricelist = []
-for item in element_list:
-	element_pricelist.append([item, randrange(100, 200), randrange(10, 50)])
+
+def price_refresh():
+	for item in range(len(element_pricelist)):
+		element_pricelist.pop(0)
+
+	for item in element_list:
+		element_pricelist.append([item[0], 0, randrange(1, 100), item[1]])
+
+	for item in element_pricelist:	
+		item[1] = rarity(item[2], item[3])
 
 
-
+price_refresh()
 
 class game_function(object):
 	def __init__(self, refuel = False, bank = False, cargo = False, merchant = False, destination = False):
@@ -43,6 +59,14 @@ money = bacon.Image('greenbank.png')
 cargo = bacon.Image('greencargo.png')
 triangle = bacon.Image('triangle.png')
 robot = bacon.Image('cargorobot.png')
+redrocket = bacon.Image('redrocket.png')
+ship1 = bacon.Image('dauntless.png')
+ship2 = bacon.Image('firefly.png')
+ship3 = bacon.Image('excelsior.png')
+ship4 = bacon.Image('defiant.png')
+tutorial = bacon.Image('tutorial.png')
+
+
 merch1 = bacon.Image('merch1.png')
 merch2 = bacon.Image('merch2.png')
 merch3 = bacon.Image('merch3.png')
@@ -61,7 +85,7 @@ titlefont = bacon.Font('moonhouse.ttf', 40)
 byline = bacon.Font('moonhouse.ttf', 20)
 planet = bacon.Font('FINALOLD.ttf', 20)
 robot_speak = bacon.Font('LCD_Solid.ttf', 14)
-ship = bacon.Image('ship3.png')
+
 music = bacon.Sound('farewell.ogg', stream=True)
 
 battery_range = {'x1': 183, 'x2': 233, 'y1': 486, 'y2': 540}
@@ -71,18 +95,20 @@ money_range = {'x1': 460, 'x2': 540, 'y1': 486, 'y2': 540}
 depart_range = {'x1': 555, 'x2': 630, 'y1': 486, 'y2': 540}
 
 planet_master = []
-
+planet_locator = []
 for item in planet_list: #create master planet list 
 	planet_master.append(Planet(item[0], item[1], item[2], merch_list.pop(0)))
+	planet_locator.append((item[1], item[2]))
 
-myplayer = Player("Hobart Killjoy", "defiant", 100003298, 0, 213, 196)
-myship = Ship("Defiant", 10, 10000, 400)
-myship.fuel = 90
+
+myplayer = Player("Hobart Killjoy", "defiant", 10000, 0, 213, 196)
+myship = Ship("Defiant", 10, 10000, 50)
+myship.fuel = 100 # set fuel to 100 for start
 line_height = 25 # for planet font
 
 
 music_voice = bacon.Voice(music, loop=True)
-#music_voice.play()
+music_voice.play()
 
 x = 360 #inital player start position
 y = 300
@@ -98,6 +124,38 @@ def transfer_element_to_market(product): # add product to market, return amount 
 			if item[0].find(product) != -1:
 				item[2] += 1
 				return item[1]
+
+def depart_view():
+	bacon.draw_image(redrocket, 561, 485)
+	if myplayer.destination:
+		bacon.draw_image(depart, 561, 485)
+		bacon.push_color()
+		bacon.set_color(1,1,1,1) # white
+		bacon.draw_string(planet, "destination set: %s" % myplayer.destination, 400, 470)	
+		bacon.pop_color
+		
+		bacon.push_color() # place pin
+		bacon.set_color(.74, .07, .07, 1) # red
+		bacon.draw_image(target, myplayer.destination_x - 7, myplayer.destination_y - 20)
+		bacon.pop_color()
+		
+		bacon.push_color() # set fuel usage in red on gauge
+		gauge_level = (179 * (myplayer.fuel_used/100.0))
+		if gauge_level == 0:
+			gauge_level = 14
+
+		bacon.set_color(.74, .07, .07, 1) # red
+		bacon.fill_rect(14, 496, (gauge_level), 530) 
+		bacon.pop_color()
+
+		bacon.push_color()
+		bacon.set_color(0, 0, 0, 1)
+
+		if myplayer.fuel_used > myship.fuel:
+			bacon.draw_string(planet, "need more fuel", 16, 522)
+		else:	
+			bacon.draw_string(planet, "fuel used: %r " % myplayer.fuel_used, 16, 522)
+		bacon.pop_color()
 
 
 def cargo_view():
@@ -139,7 +197,8 @@ def merchant_view():
 
 	bacon.push_color() 
 	bacon.draw_image(robot, 20, 65) # draw cargo robot
-	bacon.draw_image(planet_master[0].merchant_photo, 350, 65) #draw planet merchant
+	n = planet_locator.index((myplayer.location_x, myplayer.location_y))
+	bacon.draw_image(planet_master[n].merchant_photo, 350, 65) #draw planet merchant
 	bacon.pop_color()
 
 	bacon.push_color()
@@ -213,9 +272,11 @@ def merchant_view():
 def distance_and_fuel(x1, y1, x2, y2):
 	myplayer.distance = int((
 	(x1 - x2) ** 2 + 
-	(y1 - y2) ** 2 ) **(.5))
-	myplayer.fuel_used = int((myplayer.distance/525.0) * 100)
-	myplayer.distance /= 85
+	(y1 - y2) ** 2 ) **(.5)) # calculate distance to destination(x2,y2) from current point
+	myplayer.fuel_used = int(((myplayer.distance/myship.velocity)/100.0) * myship.weight) # calculate fuel usage
+	myplayer.distance /= 85 # modify distance to scale to screen
+	if myplayer.fuel_used > 100:
+		myplayer.fuel_used = 100
 	return myplayer.distance, myplayer.fuel_used
 
 def refill_tank():
@@ -270,7 +331,7 @@ def main_view(): # call from on_tick to draw main game elements
 	bacon.pop_color()
 
 	bacon.push_color() # place star for current location
-	bacon.draw_image(star, planet_list[0][1] - 8, planet_list[0][2] - 6)
+	bacon.draw_image(star, myplayer.location_x - 8, myplayer.location_y - 6)
 	bacon.pop_color()	
 
 	bacon.push_color()
@@ -345,7 +406,7 @@ def core_action():
 
 
 
-
+myplayer.name = []
 class Menu(bacon.Game):
 
 	def on_tick(self):
@@ -356,17 +417,156 @@ class Menu(bacon.Game):
 		bacon.draw_string(titlefont, 'ELEMENT', 70, 100)
 		bacon.draw_string(titlefont, 'RUNNER', 250, 140)
 		bacon.draw_string(byline, "a game by ben kulp", 150, 180)	
-		bacon.draw_string(planet, '[ press enter to begin ]', 130, bacon.window.height/2)	
-		bacon.draw_string(planet, '[ press h for tutorial ]', 130, (bacon.window.height/2 - 30))
+		bacon.draw_string(planet, "[ press space to begin ]", 130, bacon.window.height/2)	
+		bacon.draw_string(planet, "[ hold 'h' for tutorial ]", 130, (bacon.window.height/2 - 30))
 		bacon.pop_color()	
+		if bacon.Keys.space in bacon.keys:
+			bacon.run(Enter_name())
+		if bacon.Keys.h in bacon.keys:
+			bacon.draw_image(tutorial, 0, 0)	
+
+
+class Enter_name(bacon.Game):
+	def on_tick(self):
+		bacon.draw_image(title, 0, 0)
+		bacon.draw_string(planet, "[ Type your Name ]", 100, 430) 
+		bacon.draw_string(planet, "[ press 'Enter' when done ]", 100, 450)
+		
+		n = 0
+		for item in myplayer.name:
+			bacon.draw_string(robot_speak, "%s" % myplayer.name[n], (240 + (10 * n)), 475)
+			n += 1
+
 		if bacon.Keys.enter in bacon.keys:
-			bacon.run(Game())	
+			myplayer.name = "".join(myplayer.name)
+			bacon.run(Character_Builder())
+	
+	def	on_key(self, key, pressed):
+		for keys in bacon.keys:
+			if keys in range(96, 123):
+				myplayer.name.append(bacon.Keys.tostring(keys))
+			elif keys == 32:
+				myplayer.name.append(" ")
+			elif keys == 268:
+				myplayer.name.pop(len(myplayer.name)-1)
 
-	def on_key(self, key, pressed):
-		print bacon.Keys.tostring(key)
 
 
 
+
+
+
+
+
+class Character_Builder(bacon.Game):
+
+	def on_tick(self):
+		x, y = bacon.mouse.x, bacon.mouse.y
+		oberon = [5000, 75, 40, 5] # set ship attributes
+		intrepid = [6000, 225, 80, 2]
+		excelsior = [4000, 100, 60, 2]
+		firefly = [7000, 125, 80, 3]
+		
+		bacon.draw_image(title, 0, 0)
+		bacon.draw_string(planet, "Select your starship", 240, 450)
+		if x in range(
+			(bacon.window.width * 0/4 + 20), 
+			(bacon.window.width * 0/4 + 20 + ship1.width)) and y in range(
+			300, (300 + ship1.height)):
+			bacon.draw_image(triangle, (bacon.window.width * 0/4 + 42), 265)
+			bacon.fill_rect(0, 125, 200, 265)
+			bacon.push_color()
+			bacon.set_color(0,0,0,1) #black
+			bacon.draw_string(planet, "Class: Oberon", 10, 153)
+			bacon.draw_string(planet, "Price: %d credits" % oberon[0], 10, 153 + line_height * 4)
+			bacon.draw_string(planet, "Cargo Space: %d" % oberon[1], 10, 153 + line_height)
+			bacon.draw_string(planet, "Weight: %d tons" % oberon[2], 10, 153 + line_height * 2)	
+			bacon.draw_string(planet, "Max Velocity: %d" % oberon[3], 10, 153 + line_height * 3)		
+			bacon.pop_color()
+			if bacon.mouse.left:
+				myplayer.ship = "Oberon"
+				myplayer.money_in_pocket -= oberon[0]									
+				myship.cost_to_buy = oberon[0]
+				myship.hauling_capacity = oberon[1]
+				myship.weight = oberon[2]
+				myship.velocity = oberon[3]
+				bacon.run(Game())
+		bacon.draw_image(ship1, (bacon.window.width * 0/4 + 40), 300)
+
+		if x in range(
+			(bacon.window.width * 1/4 + 20), 
+			(bacon.window.width * 1/4 + 20 + ship1.width)) and y in range(
+			300, (300 + ship1.height)):
+			bacon.draw_image(triangle, (bacon.window.width * 1/4 + 45), 265)
+			bacon.fill_rect(135, 125, 335, 265)
+			bacon.push_color()
+			bacon.set_color(0,0,0,1) #black
+			bacon.draw_string(planet, "Class: Intrepid", 145, 153)
+			bacon.draw_string(planet, "Price: %d credits" % intrepid[0], 145, 153 + line_height * 4)
+			bacon.draw_string(planet, "Cargo Space: %d" % intrepid[1], 145, 153 + line_height)
+			bacon.draw_string(planet, "Weight: %d tons" % intrepid[2], 145, 153 + line_height * 2)	
+			bacon.draw_string(planet, "Max Velocity: %d" % intrepid[3], 145, 153 + line_height * 3)		
+			bacon.pop_color()			
+			if bacon.mouse.left:
+				myplayer.ship = "Intrepid"
+				myplayer.money_in_pocket -= intrepid[0]								
+				myship.cost_to_buy = intrepid[0]
+				myship.hauling_capacity = intrepid[1]
+				myship.weight = intrepid[2]
+				myship.velocity = intrepid[3]
+				bacon.run(Game())
+		bacon.draw_image(ship2, (bacon.window.width * 1/4 + 40), 300)
+
+		if x in range(
+			(bacon.window.width * 2/4 + 20), 
+			(bacon.window.width * 2/4 + 20 + ship1.width)) and y in range(
+			300, (300 + ship1.height)):
+			bacon.draw_image(triangle, (bacon.window.width * 2/4 + 29), 265)
+			bacon.fill_rect(290, 125, 490, 265)
+			bacon.push_color()
+			bacon.set_color(0,0,0,1) #black
+			bacon.draw_string(planet, "Class: Excelsior", 300, 153)
+			bacon.draw_string(planet, "Price: %d credits" % excelsior[0], 300, 153 + line_height * 4)
+			bacon.draw_string(planet, "Cargo Space: %d" % excelsior[1], 300, 153 + line_height)
+			bacon.draw_string(planet, "Weight: %d tons" % excelsior[2], 300, 153 + line_height * 2)	
+			bacon.draw_string(planet, "Max Velocity: %d" % excelsior[3], 300, 153 + line_height * 3)		
+			bacon.pop_color()				
+			if bacon.mouse.left:
+				myplayer.ship = "Excelsior"
+				myplayer.money_in_pocket -= excelsior[0]
+				myship.cost_to_buy = excelsior[0]
+				myship.hauling_capacity = excelsior[1]
+				myship.weight = excelsior[2]
+				myship.velocity = excelsior[3]
+				bacon.run(Game())
+		bacon.draw_image(ship3, (bacon.window.width * 2/4 + 30), 300)	
+
+		if x in range(
+			(bacon.window.width * 3/4 + 20), 
+			(bacon.window.width * 3/4 + 20 + ship1.width)) and y in range(
+			300, (300 + ship1.height)):
+			bacon.draw_image(triangle, (bacon.window.width * 3/4 + 22), 265)
+			bacon.fill_rect(440, 125, 640, 265)
+			bacon.push_color()
+			bacon.set_color(0,0,0,1) #black
+			bacon.draw_string(planet, "Class: Firefly", 450, 153)
+			bacon.draw_string(planet, "Price: %d credits" % firefly[0], 450, 153 + line_height * 4)
+			bacon.draw_string(planet, "Cargo Space: %d" % firefly[1], 450, 153 + line_height)
+			bacon.draw_string(planet, "Weight: %d tons" % firefly[2], 450, 153 + line_height * 2)	
+			bacon.draw_string(planet, "Max Velocity: %d" % firefly[3], 450, 153 + line_height * 3)		
+			bacon.pop_color()	
+			if bacon.mouse.left:
+				myplayer.ship = "Firefly"
+				myplayer.money_in_pocket -= firefly[0]				
+				myship.cost_to_buy = firefly[0]
+				myship.hauling_capacity = firefly[1]
+				myship.weight = firefly[2]
+				myship.velocity = firefly[3]
+				bacon.run(Game())
+		bacon.draw_image(ship4, (bacon.window.width * 3/4 + 20), 300)
+
+		#if bacon.Keys.space in bacon.keys:
+		#	bacon.run(Game())
 
 def refuel():
 	x, y = bacon.mouse.x, bacon.mouse.y
@@ -405,7 +605,7 @@ def refuel():
 
 class Game(bacon.Game):
 	def on_tick(self):
-		global banking_window
+		#global banking_window
 		x, y = bacon.mouse.x, bacon.mouse.y
 		main_view() # build the main page elements 
 		core_action() # build the hover colors for screen icons
@@ -418,7 +618,7 @@ class Game(bacon.Game):
 		if window.merchant:
 			merchant_view()
 		if window.destination:
-			print "destination"
+			depart_view()
 		if window.refuel:
 			refuel()
 
@@ -427,7 +627,7 @@ class Game(bacon.Game):
 		else:	
 			for item in planet_list: # on mouse hover over planet  usage
 				if x in range(item[1], item[1] + 12) and y in range(item[2], item[2] + 12):
-					distance_and_fuel(planet_list[1][1], planet_list[1][2], item[1], item[2])
+					distance_and_fuel(myplayer.location_x, myplayer.location_y, item[1], item[2])
 					
 					bacon.push_color() # place pin
 					bacon.set_color(.74, .07, .07, 1) # red
@@ -435,8 +635,88 @@ class Game(bacon.Game):
 					bacon.pop_color()
 					
 					bacon.push_color() # set fuel usage in red on gauge
+					gauge_level = (179 * (myplayer.fuel_used/100.0))
+					if gauge_level == 0:
+						gauge_level = 14
 					bacon.set_color(.74, .07, .07, 1) # red
-					bacon.fill_rect(14, 496, (179 * (myplayer.fuel_used/100.0)), 530) 
+					bacon.fill_rect(14, 496, (gauge_level), 530) 
+					bacon.pop_color()
+
+					bacon.push_color()
+					bacon.set_color(0, 0, 0, 1)
+					gauge_level = (179 * (myplayer.fuel_used/100.0))
+					if gauge_level == 0:
+						gauge_level = 14
+					if myplayer.fuel_used > myship.fuel:
+						bacon.draw_string(planet, "need more fuel", 16, 522)
+					else:	
+						bacon.draw_string(planet, "fuel used: %r " % myplayer.fuel_used, 16, 522)
+					bacon.pop_color()
+		if bacon.Keys.space in bacon.keys or bacon.mouse.left:
+
+			if window.merchant:
+				n = 0
+				for item in myship.current_cargo: # process selling element
+					n += 1
+					if x in range(220, 265) and y in range(
+						(160 + (line_height * n)), (160 + line_height + line_height * n)):
+						if item[2] == 0:
+							self.current_cargo.remove(item)
+							pass
+						elif myship.remove_cargo(item[0]):
+							
+							myplayer.money_in_pocket += transfer_element_to_market(item[0])
+
+
+				n = 0		
+				for item in element_pricelist: # process buying element
+					n += 1
+					if x in range(300, 345) and y in range(
+						(160 + (line_height * n)), (160 + line_height + line_height * n)):
+						if item[2] == 0:
+							pass 
+						elif myship.add_cargo(item[0], item[1]):
+							myplayer.remove_money_from_pocket(item[1])
+							item[2] -= 1
+							if myplayer.money_in_pocket < 0:
+								myplayer.money_in_bank += myplayer.money_in_pocket
+								myplayer.money_in_pocket = 0
+
+			if window.bank: 		
+				if x in range(515, 617) and y in range(412, 442) and myplayer.money_in_bank > 1000: 
+					myplayer.money_in_bank -= 1000
+					myplayer.money_in_pocket += 1000
+				elif x in range(515, 617) and y in range(378, 406) and myplayer.money_in_pocket > 1000:
+					myplayer.money_in_bank += 1000
+					myplayer.money_in_pocket -= 1000
+
+
+	def on_mouse_button(self, button, pressed):
+		x, y = bacon.mouse.x, bacon.mouse.y
+
+		if window.bank: 		
+			if x in range(515, 617) and y in range(412, 442) and myplayer.money_in_bank > 1000: 
+				myplayer.money_in_bank -= 1000
+				myplayer.money_in_pocket += 1000
+			elif x in range(515, 617) and y in range(378, 406) and myplayer.money_in_pocket > 1000:
+				myplayer.money_in_bank += 1000
+				myplayer.money_in_pocket -= 1000
+		if window.destination:
+			for item in planet_list: # on mouse hover over planet  usage
+				if x in range(item[1], item[1] + 12) and y in range(item[2], item[2] + 12):
+					distance_and_fuel(myplayer.location_x, myplayer.location_y, item[1], item[2])
+					
+					bacon.push_color() # place pin
+					bacon.set_color(.74, .07, .07, 1) # red
+					bacon.draw_image(target, item[1] - 7, item[2] - 20)
+					bacon.pop_color()
+					
+					bacon.push_color() # set fuel usage in red on gauge
+					gauge_level = (179 * (myplayer.fuel_used/100.0))
+					if gauge_level == 0:
+						gauge_level = 14
+					bacon.set_color(.74, .07, .07, 1) # red
+					bacon.fill_rect(14, 496, (gauge_level), 530) 
 					bacon.pop_color()
 
 					bacon.push_color()
@@ -448,48 +728,71 @@ class Game(bacon.Game):
 						bacon.draw_string(planet, "fuel used: %r " % myplayer.fuel_used, 16, 522)
 					bacon.pop_color()
 
-	def on_mouse_button(self, button, pressed):
-		x, y = bacon.mouse.x, bacon.mouse.y
+					myplayer.destination = copy.copy(item[0])
+					myplayer.destination_x = copy.copy(item[1])
+					myplayer.destination_y = copy.copy(item[2])
+					bacon.draw_image(depart, 561, 485)	
 
-		if window.bank: 		
-			if x in range(515, 617) and y in range(412, 442) and myplayer.money_in_bank > 100: 
-				myplayer.money_in_bank -= 100
-				myplayer.money_in_pocket += 100
-			elif x in range(515, 617) and y in range(378, 406) and myplayer.money_in_pocket > 100:
-				myplayer.money_in_bank += 100
-				myplayer.money_in_pocket -= 100
+		if myplayer.destination: # set up next turn properties			
+			if myplayer.destination_x == myplayer.location_x and myplayer.destination_y == myplayer.location_y:
+				return False
+			elif x in range( 
+			depart_range['x1'], depart_range['x2']) and y in range(
+			depart_range['y1'], depart_range['y2']):
+				myplayer.location_x = copy.copy(myplayer.destination_x) # move player to destination
+				myplayer.location_y = copy.copy(myplayer.destination_y)
+				myplayer.turn += 1 # advance turn
+				myship.fuel -= myplayer.fuel_used # remove fuel from flight
+				myplayer.destination_x = None # return destination variables to none
+				myplayer.destination_y = None
+				myplayer.destination = None
+				if myplayer.money_in_bank < 0:
+					myplayer.money_in_bank += (myplayer.money_in_bank * .15) # calc bank loan interest
+				else:		 
+					myplayer.money_in_bank += (myplayer.money_in_bank * .05) # calc bank interest
+				price_refresh()# recalculate price index and quantities
+				if myplayer.turn > 10:
+					bacon.run(Game_Over())
+
+
+				
 		if window.refuel:
 			if x in range(230, 260) and y in range(408, 444): # no refill
 				window.refuel = False
 			if x in range(102, 140) and y in range(408, 444): # yes refill
 				refill_tank()
 				window.refuel = False
-		if window.merchant:
-			n = 0
-			for item in myship.current_cargo: # process selling element
-				n += 1
-				if x in range(220, 265) and y in range(
-					(160 + (line_height * n)), (160 + line_height + line_height * n)):
-					if item[2] == 0:
-						self.current_cargo.remove(item)
-						pass
-					elif myship.remove_cargo(item[0]):
-						
-						myplayer.money_in_pocket += transfer_element_to_market(item[0])
-
-			n = 0		
-			for item in element_pricelist: # process buying element
-				n += 1
-				if x in range(300, 345) and y in range(
-					(160 + (line_height * n)), (160 + line_height + line_height * n)):
-					if item[2] == 0:
-						pass 
-					elif myship.add_cargo(item[0], item[1]):
-						myplayer.remove_money_from_pocket(item[1])
-						item[2] -= 1
+		#bacon.run(Game())		
 
 
-		bacon.run(Game())
+class Game_Over(bacon.Game):
+	def on_tick(self):
+		bacon.draw_image(title, 0, 0)
+		bacon.push_color()
+		bacon.set_color(0, 0, 0, 1 - round((abs(bacon.mouse.y-270.0)/540.0), 2))		
+		bacon.draw_string(titlefont, 'ELEMENT', 70, 100)
+		bacon.draw_string(titlefont, 'RUNNER', 250, 140)
+		bacon.draw_string(byline, "Game Over", 150, 180)
+		bacon.draw_string(planet, "Final Score: %d" % myplayer.money_in_bank, 150, 210)
+		bacon.draw_string(planet, "[ press 'space' to start a new game ]", 150, 235)
+		bacon.draw_string(planet, "[ High Scores ]", 150, 280)
+		if myplayer.turn > 10:
+			high_score.append([int(myplayer.money_in_bank), myplayer.name])
+			high_score.sort(key=None, reverse=True)
+			myplayer.turn = 10
+		n = 0
+		for item in high_score:
+			bacon.draw_string(planet, "%s........  %d" % (high_score[n][1], high_score[n][0]), 150, (315 + line_height * n))
+			n += 1
+
+		bacon.pop_color()	
+		if bacon.Keys.space in bacon.keys:
+			myplayer.character_cleaner()
+			myship.ship_cleaner()
+			bacon.run(Character_Builder())
+
+
+		
 
 	
 

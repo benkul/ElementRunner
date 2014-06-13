@@ -1,15 +1,19 @@
-element_list = [ #build into dictionary with base price as other item
-"Hydrogen", 
-"Carbon",
-"Nitrogen",
-"Oxygen",
-"Sodium",
-"Magnesium",
-"Sulfur",
-"Potassium",
-"Iron",
-"Titanium"
+element_list = [ 
+["Hydrogen", 10],
+["Carbon", 30],
+["Nitrogen", 50],
+["Oxygen", 100],
+["Sodium", 150],
+["Magnesium", 200],
+["Sulfur", 300],
+["Potassium", 500],
+["Iron", 1000],
+["Titanium", 2000]
 ]
+
+
+
+
 more_elements = [
 "Hydrogen", 
 "Helium",

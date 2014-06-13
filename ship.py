@@ -1,5 +1,4 @@
 
-
 class Ship(object):
 	def __init__(self, name, velocity, weight, hauling_capacity, 
 			cargo_space=None, current_cargo=None, fuel=100, cost_to_buy=None, value=None):
@@ -11,6 +10,10 @@ class Ship(object):
 		self.current_cargo = []
 		self.cost_to_buy = None
 		self.value = None
+	
+	def ship_cleaner(self):
+		self.current_cargo = []
+		self.fuel = 100
 
 	def add_cargo(self, product, cost): # add defined product to hold
 		if len(self.current_cargo) == 0:
