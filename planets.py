@@ -22,11 +22,6 @@ class Planet(object):
 
 
 
-	"""def transfer_element_to_market(self, product): # add product to market, return amount paid for it
-		for item in element_pricelist:
-			if item[0].find(product) != -1:
-				item[2] += 1
-				return item[1]"""
 
 
 

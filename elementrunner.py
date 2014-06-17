@@ -2,24 +2,24 @@ import bacon
 import copy
 from random import randrange
 from random import choice
-from math import log
-from math import pi
 from ship import Ship
 from player import Player
 from planets import planet_list, Planet # contains list of planets for game
 from elements import element_list # contains list of element commodities for game
 
-def rarity(quantity, base_price):
+
+high_score = [] # create list to put high scores in
+element_pricelist = [] # create list that is refreshed when player arrives on planet
+
+def rarity(quantity, base_price): # determines price adjustment based on quantity on hand
 	price = float(base_price * (1.0 - ((quantity/200.0))))
 	if price <= 0:
 		price = 1
 	return price
  
 
-high_score = []
-element_pricelist = []
 
-def price_refresh():
+def price_refresh(): # 
 	for item in range(len(element_pricelist)):
 		element_pricelist.pop(0)
 
@@ -30,9 +30,9 @@ def price_refresh():
 		item[1] = rarity(item[2], item[3])
 
 
-price_refresh()
+price_refresh() # initalizes element prices and populates list
 
-class game_function(object):
+class game_function(object): # create class that contains On/Off variables for game windows
 	def __init__(self, refuel = False, bank = False, cargo = False, merchant = False, destination = False):
 		self.refuel = refuel
 		self.bank = bank
@@ -40,18 +40,15 @@ class game_function(object):
 		self.merchant = merchant
 		self.destination = destination
 
-window = game_function()
+window = game_function() # create instance of window class
 
+
+fuel_cost = 21 # sets cost per unit of fuel for vehicle
+#game images
 title = bacon.Image('Galaxy.jpg')
-fuel_cost = 21
 background = bacon.Image('backdrop3.jpg')
-
 star = bacon.Image('star3.png')
 target = bacon.Image('pin72.png')
-
-
-
-
 battery = bacon.Image('greenbattery.png')
 market = bacon.Image('greenmarket.png')
 depart = bacon.Image('greenrocket.png')
@@ -65,8 +62,6 @@ ship2 = bacon.Image('firefly.png')
 ship3 = bacon.Image('excelsior.png')
 ship4 = bacon.Image('defiant.png')
 tutorial = bacon.Image('tutorial.png')
-
-
 merch1 = bacon.Image('merch1.png')
 merch2 = bacon.Image('merch2.png')
 merch3 = bacon.Image('merch3.png')
@@ -77,40 +72,45 @@ merch7 = bacon.Image('merch7.png')
 merch8 = bacon.Image('merch8.png')
 merch9 = bacon.Image('merch9.png')
 merch10 = bacon.Image('merch10.png')
-merch_list = [merch1, merch2, merch3, merch4, merch5, merch6, merch7, merch8, merch9, merch10]
+# create list of merchant names
+merch_list = [merch1, merch2, merch3, merch4, merch5, merch6, merch7, merch8, merch9, merch10] 
 
 
 
+# set up game fonts
 titlefont = bacon.Font('moonhouse.ttf', 40)
 byline = bacon.Font('moonhouse.ttf', 20)
 planet = bacon.Font('FINALOLD.ttf', 20)
 robot_speak = bacon.Font('LCD_Solid.ttf', 14)
 
+# music 
 music = bacon.Sound('farewell.ogg', stream=True)
 
+# sets ranges for the main game icons at the bottom of the screen
 battery_range = {'x1': 183, 'x2': 233, 'y1': 486, 'y2': 540}
 cargo_range = {'x1': 267, 'x2': 339, 'y1': 486, 'y2': 540}
 market_range = {'x1': 363, 'x2': 486, 'y1': 486, 'y2': 540}
 money_range = {'x1': 460, 'x2': 540, 'y1': 486, 'y2': 540}
 depart_range = {'x1': 555, 'x2': 630, 'y1': 486, 'y2': 540}
 
-planet_master = []
-planet_locator = []
+planet_master = [] 
+planet_locator = [] 
 for item in planet_list: #create master planet list 
 	planet_master.append(Planet(item[0], item[1], item[2], merch_list.pop(0)))
 	planet_locator.append((item[1], item[2]))
 
 
-myplayer = Player("Hobart Killjoy", "defiant", 10000, 0, 213, 196)
-myship = Ship("Defiant", 10, 10000, 50)
+myplayer = Player("Hobart Killjoy", "defiant", 10000, 0, 213, 196) # initialize player class
+myship = Ship("Defiant", 10, 10000, 50) #initialize ship class
 myship.fuel = 100 # set fuel to 100 for start
 line_height = 25 # for planet font
 
-
+#initalize music
 music_voice = bacon.Voice(music, loop=True)
+# star music at start of game
 music_voice.play()
 
-x = 360 #inital player start position
+x = 360 #initialize player start position
 y = 300
 
 # create game parameters class that includes dimensions, player start position, 
@@ -125,8 +125,8 @@ def transfer_element_to_market(product): # add product to market, return amount 
 				item[2] += 1
 				return item[1]
 
-def depart_view():
-	bacon.draw_image(redrocket, 561, 485)
+def depart_view(): # set view for player to travel from one planet to another
+	bacon.draw_image(redrocket, 561, 485) 
 	if myplayer.destination:
 		bacon.draw_image(depart, 561, 485)
 		bacon.push_color()
@@ -777,7 +777,7 @@ class Game_Over(bacon.Game):
 		bacon.draw_string(planet, "[ press 'space' to start a new game ]", 150, 235)
 		bacon.draw_string(planet, "[ High Scores ]", 150, 280)
 		if myplayer.turn > 10:
-			high_score.append([int(myplayer.money_in_bank), myplayer.name])
+			high_score.append([int(myplayer.money_in_bank +myplayer.money_in_pocket), myplayer.name])
 			high_score.sort(key=None, reverse=True)
 			myplayer.turn = 10
 		n = 0
@@ -789,7 +789,7 @@ class Game_Over(bacon.Game):
 		if bacon.Keys.space in bacon.keys:
 			myplayer.character_cleaner()
 			myship.ship_cleaner()
-			bacon.run(Character_Builder())
+			bacon.run(Enter_name())
 
 
 		

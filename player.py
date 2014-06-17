@@ -16,14 +16,15 @@ class Player(object):
 		self.destination_x = None
 		self.destination_y = None
 	
-	def remove_money_from_pocket(self, amount):
+	def remove_money_from_pocket(self, amount): # removes money from pocket
 		self.money_in_pocket -= amount
 
-	def remove_money_from_bank(self, amount):
+	def remove_money_from_bank(self, amount): # removes money from bank
 		self.money_in_bank -= amount 
 	
-	def character_cleaner(self):
+	def character_cleaner(self): # cleans character class for new game
 		self.ship = None
+		self.name = []
 		self.money_in_pocket = 10000
 		self.money_in_bank = 0
 		self.location_x = 213
