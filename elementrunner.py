@@ -343,7 +343,7 @@ def main_view(): # call from on_tick to draw main game elements
 	bacon.pop_color()
 
 
-def core_action():
+def core_action(): # set mouse roll-over behaviour for icons on bottom of screen
 	x, y = bacon.mouse.x, bacon.mouse.y	
 
 	if x in range(
@@ -356,7 +356,6 @@ def core_action():
 			window.merchant = False
 			window.destination = False
 			window.refuel = True
-
 
 	if x in range(
 		cargo_range['x1'], cargo_range['x2']) and y in range(
@@ -391,8 +390,6 @@ def core_action():
 			window.destination = False
 			window.refuel = False
 
-
-
 	if x in range( 
 		depart_range['x1'], depart_range['x2']) and y in range(
 		depart_range['y1'], depart_range['y2']):
@@ -407,6 +404,7 @@ def core_action():
 
 
 myplayer.name = []
+
 class Menu(bacon.Game):
 
 	def on_tick(self):
@@ -565,8 +563,6 @@ class Character_Builder(bacon.Game):
 				bacon.run(Game())
 		bacon.draw_image(ship4, (bacon.window.width * 3/4 + 20), 300)
 
-		#if bacon.Keys.space in bacon.keys:
-		#	bacon.run(Game())
 
 def refuel():
 	x, y = bacon.mouse.x, bacon.mouse.y
@@ -655,7 +651,7 @@ class Game(bacon.Game):
 		if bacon.Keys.space in bacon.keys or bacon.mouse.left:
 
 			if window.merchant:
-				n = 0
+				n = 0 # list counter
 				for item in myship.current_cargo: # process selling element
 					n += 1
 					if x in range(220, 265) and y in range(
@@ -668,7 +664,7 @@ class Game(bacon.Game):
 							myplayer.money_in_pocket += transfer_element_to_market(item[0])
 
 
-				n = 0		
+				n = 0 # list counter		
 				for item in element_pricelist: # process buying element
 					n += 1
 					if x in range(300, 345) and y in range(
@@ -692,17 +688,17 @@ class Game(bacon.Game):
 
 
 	def on_mouse_button(self, button, pressed):
-		x, y = bacon.mouse.x, bacon.mouse.y
+		x, y = bacon.mouse.x, bacon.mouse.y 
 
-		if window.bank: 		
+		if window.bank: #money goest into/out of bank in 1000 increments for speed/simplicity		
 			if x in range(515, 617) and y in range(412, 442) and myplayer.money_in_bank > 1000: 
-				myplayer.money_in_bank -= 1000
+				myplayer.money_in_bank -= 1000 
 				myplayer.money_in_pocket += 1000
 			elif x in range(515, 617) and y in range(378, 406) and myplayer.money_in_pocket > 1000:
 				myplayer.money_in_bank += 1000
 				myplayer.money_in_pocket -= 1000
 		if window.destination:
-			for item in planet_list: # on mouse hover over planet  usage
+			for item in planet_list: # on mouse hover over planet
 				if x in range(item[1], item[1] + 12) and y in range(item[2], item[2] + 12):
 					distance_and_fuel(myplayer.location_x, myplayer.location_y, item[1], item[2])
 					
@@ -762,7 +758,6 @@ class Game(bacon.Game):
 			if x in range(102, 140) and y in range(408, 444): # yes refill
 				refill_tank()
 				window.refuel = False
-		#bacon.run(Game())		
 
 
 class Game_Over(bacon.Game):
