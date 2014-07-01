@@ -234,39 +234,35 @@ def merchant_view():
 		bacon.draw_string(planet, "%d" % item[1], 490, (180 + (line_height * n)))
 		bacon.draw_string(planet, "%d" % item[2], 545, (180 + (line_height * n)))
 		bacon.push_color() # draw rectange
-		# fill rectangle on hover
-		# but text for rectangle
-	n = 0
-	for item in myship.current_cargo: # draw sell buttons for cargo
-		n += 1
-		bacon.draw_rect(
-		220, (160 + (line_height * n)), 
-		265, (160 + line_height + line_height * n)) # draw rectange
 
-		if x in range(220, 265) and y in range((160 + (line_height * n)), (160 + line_height + line_height * n)):
+	
+	for i, item in enumerate(myship.current_cargo, 1): # draw sell buttons for cargo
+		bacon.draw_rect(
+		220, (160 + (line_height * i)),
+		265, (160 + line_height + line_height * i)) # draw rectange
+
+		if x in range(220, 265) and y in range((160 + (line_height * i)), (160 + line_height + line_height * i)):
 			bacon.push_color # fill rectangle on hover
 			bacon.set_color(.20, .58, .03, 1) # green
 			bacon.fill_rect(		
-			221, (161 + (line_height * n)), 
-			264, (159 + line_height + line_height * n)) 
+			221, (161 + (line_height * i)), 
+			264, (159 + line_height + line_height * i)) 
 			bacon.pop_color()
-		bacon.draw_string(planet, "sell", 226, (180 + (line_height * n)))# sell text for rectangle	
+		bacon.draw_string(planet, "sell", 226, (180 + (line_height * i)))# sell text for rectangle	
 	
-	n = 0
-	for item in element_pricelist: # draw buy buttons for merchant
-		n += 1
+	for i, item in enumerate(element_pricelist, 1): # draw buy buttons for merchant
 		bacon.draw_rect(
-		300, (160 + (line_height * n)), 
-		345, (160 + line_height + line_height * n)) # draw rectange
+		300, (160 + (line_height * i)), 
+		345, (160 + line_height + line_height * i)) # draw rectange
 
-		if x in range(300, 345) and y in range((160 + (line_height * n)), (160 + line_height + line_height * n)):
+		if x in range(300, 345) and y in range((160 + (line_height * i)), (160 + line_height + line_height * i)):
 			bacon.push_color # fill rectangle on hover
 			bacon.set_color(.20, .58, .03, 1)  # red
 			bacon.fill_rect(		
-			301, (161 + (line_height * n)), 
-			344, (159 + line_height + line_height * n)) 
+			301, (161 + (line_height * i)), 
+			344, (159 + line_height + line_height * i)) 
 			bacon.pop_color()
-		bacon.draw_string(planet, "buy", 308, (180 + (line_height * n)))# buy text for rectangle	
+		bacon.draw_string(planet, "buy", 308, (180 + (line_height * i)))# buy text for rectangle	
 	bacon.pop_color()
 
 def distance_and_fuel(x1, y1, x2, y2):
@@ -429,12 +425,10 @@ class Enter_name(bacon.Game):
 		bacon.draw_image(title, 0, 0)
 		bacon.draw_string(planet, "[ Type your Name ]", 100, 430) 
 		bacon.draw_string(planet, "[ press 'Enter' when done ]", 100, 450)
-		
 		n = 0
 		for item in myplayer.name:
 			bacon.draw_string(robot_speak, "%s" % myplayer.name[n], (240 + (10 * n)), 475)
 			n += 1
-
 		if bacon.Keys.enter in bacon.keys:
 			myplayer.name = "".join(myplayer.name)
 			bacon.run(Character_Builder())
@@ -651,11 +645,9 @@ class Game(bacon.Game):
 		if bacon.Keys.space in bacon.keys or bacon.mouse.left:
 
 			if window.merchant:
-				n = 0 # list counter
-				for item in myship.current_cargo: # process selling element
-					n += 1
+				for i, item in enumerate(myship.current_cargo, 1): # process selling element
 					if x in range(220, 265) and y in range(
-						(160 + (line_height * n)), (160 + line_height + line_height * n)):
+						(160 + (line_height * i)), (160 + line_height + line_height * i)):
 						if item[2] == 0:
 							self.current_cargo.remove(item)
 							pass
@@ -663,12 +655,10 @@ class Game(bacon.Game):
 							
 							myplayer.money_in_pocket += transfer_element_to_market(item[0])
 
-
-				n = 0 # list counter		
-				for item in element_pricelist: # process buying element
-					n += 1
+	
+				for i, item in enumerate(element_pricelist, 1): # process buying element
 					if x in range(300, 345) and y in range(
-						(160 + (line_height * n)), (160 + line_height + line_height * n)):
+						(160 + (line_height * i)), (160 + line_height + line_height * i)):
 						if item[2] == 0:
 							pass 
 						elif myship.add_cargo(item[0], item[1]):
@@ -772,13 +762,13 @@ class Game_Over(bacon.Game):
 		bacon.draw_string(planet, "[ press 'space' to start a new game ]", 150, 235)
 		bacon.draw_string(planet, "[ High Scores ]", 150, 280)
 		if myplayer.turn > 10:
-			high_score.append([int(myplayer.money_in_bank +myplayer.money_in_pocket), myplayer.name])
+			high_score.append([int(myplayer.money_in_bank + myplayer.money_in_pocket), myplayer.name])
 			high_score.sort(key=None, reverse=True)
 			myplayer.turn = 10
-		n = 0
-		for item in high_score:
-			bacon.draw_string(planet, "%s........  %d" % (high_score[n][1], high_score[n][0]), 150, (315 + line_height * n))
-			n += 1
+		for i, item in enumerate(high_score):
+			bacon.draw_string(planet, "%s   " % high_score[i][1], 150, (315 + line_height * i))
+			bacon.draw_string(planet, "      ........       ", 150 + len(high_score[i][1]), (315 + line_height * i))
+			bacon.draw_string(planet, "%d" %  high_score[i][0], 300, (315 + line_height * i))
 
 		bacon.pop_color()	
 		if bacon.Keys.space in bacon.keys:
