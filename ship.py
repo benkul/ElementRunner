@@ -56,12 +56,3 @@ class Ship(object):
 
 	def __str__(self):
 		return self.name, self.fuel, self.current_cargo
-	
-
-
-
-
-#need function for removing fuel and refueling
-
-
-
